@@ -1,8 +1,17 @@
-import java.awt.Color;
-import java.awt.Graphics;
+import java.awt.*;
 
 public class Player {
-    int x, y, width, height;
+    public int x, y, width, height;
+
+    private final int pixelSize = 5;
+
+    private final int[][] shape = {
+            {0,1,0,1,0},
+            {1,1,1,1,1},
+            {1,0,1,0,1},
+            {1,1,1,1,1},
+            {0,1,0,1,0}
+    };
 
     public Player(int x, int y, int width, int height) {
         this.x = x;
@@ -11,21 +20,22 @@ public class Player {
         this.height = height;
     }
 
-    public void draw(Graphics g) {
-        g.setColor(Color.GREEN);
-        g.fillRect(x, y, width, height);
-    }
-
     public void moveLeft() {
-        if (x > 0) {  // Prevent moving off the left edge
-            x -= 5;  // Move left by 5 pixels
-        }
+        x -= 10;
     }
 
-// Move player right
     public void moveRight() {
-        if (x < 760) {  // Prevent moving off the right edge (1000 - 40)
-            x += 5;  // Move right by 5 pixels
+        x += 10;
+    }
+
+    public void draw(Graphics g) {
+        g.setColor(Color.CYAN.darker());
+        for (int row = 0; row < shape.length; row++) {
+            for (int col = 0; col < shape[row].length; col++) {
+                if (shape[row][col] == 1) {
+                    g.fillRect(x + col * pixelSize, y + row * pixelSize, pixelSize, pixelSize);
+                }
+            }
         }
     }
 }
