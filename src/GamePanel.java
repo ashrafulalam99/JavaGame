@@ -1,15 +1,13 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Timer timer;
     private Player player;
     private ArrayList<Bullet> bullets;
+    private ArrayList<Enemy> enemies;
 
     public GamePanel() {
         setPreferredSize(new Dimension(800, 600));
@@ -17,6 +15,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         player = new Player(400, 580, 40, 20);
         bullets = new ArrayList<>();
+        enemies = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            enemies.add(new Enemy(100 + i * 60, 50));
+        }
 
         timer = new Timer(16, this);
         timer.start();
@@ -34,9 +36,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         player.draw(g);
 
-        for (Bullet bullet : bullets)
-        {
+        for (Bullet bullet : bullets) {
             bullet.draw(g);
+        }
+
+        for (Enemy enemy : enemies) {
+            enemy.draw(g);
         }
     }
 
@@ -44,6 +49,23 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     public void actionPerformed(ActionEvent e) {
         for (Bullet bullet : bullets) {
             bullet.move();
+        }
+
+        for (Enemy enemy : enemies) {
+            enemy.move();
+        }
+
+        // Collision detection and removal of enemies and bullets
+        for (int i = bullets.size() - 1; i >= 0; i--) {
+            Bullet bullet = bullets.get(i);
+            for (int j = enemies.size() - 1; j >= 0; j--) {
+                Enemy enemy = enemies.get(j);
+                if (bullet.collidesWith(enemy)) {
+                    bullets.remove(i);
+                    enemies.remove(j);
+                    break; // Exit the loop once a collision is detected
+                }
+            }
         }
 
         repaint();
@@ -68,3 +90,4 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {}
 }
+
