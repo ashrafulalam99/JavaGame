@@ -16,7 +16,7 @@ public class Bullet {
     }
 
     public void draw(Graphics g) {
-        g.setColor(Color.WHITE);
+        g.setColor(Color.ORANGE.darker());
         g.fillRect(x, y, width, height);
     }
 
