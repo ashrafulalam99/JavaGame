@@ -1,3 +1,6 @@
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -12,7 +15,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Image backgroundImage;
     private ScoreManager scoreManager;
     private GameOver gameOver = new GameOver();
+    private boolean gameOverStarted = false;
 
+    private Image destructionImage;
+    private boolean showDestruction = false;
+    private int destructionX = 0, destructionY = 0;
 
     private Random rand = new Random();
     private long lastEnemySpawnTime = 0; // To control enemy spawn rate
@@ -23,6 +30,33 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private final long BULLET_FIRE_DELAY = 100;
 
     private long lastSurvivalPointTime = 0;
+
+    // New fields for destruction timer
+    private long destructionStartTime = 0;
+    private final int DESTRUCTION_DISPLAY_MS = 1000;
+
+    private void restartGame() {
+        GameOver.reset();
+        gameOver.visible = false;
+        gameOverStarted = false;
+
+        enemies.clear();
+        bullets.clear();
+        scoreManager.reset();
+
+        // Reset player position (adjust as needed)
+        player.x = 400;
+        player.y = 500;
+
+        // Respawn initial enemies
+        for (int i = 0; i < 5; i++) {
+            spawnEnemy();
+        }
+
+        timer.start();
+        repaint();
+    }
+
 
     public GamePanel() {
         setPreferredSize(new Dimension(800, 600));
@@ -38,21 +72,35 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             e.printStackTrace();
         }
 
-        player = new Player(400, 500, 100, 80); // Adjusted player size
+        player = new Player(400, 500, 100, 80);
         bullets = new ArrayList<>();
         enemies = new ArrayList<>();
-        Random rand = new Random();
         scoreManager = new ScoreManager();
-
 
         // Initialize 5 enemies
         for (int i = 0; i < 5; i++) {
-            spawnEnemy(); // We use spawnEnemy to spawn randomly at edges
+            spawnEnemy();
         }
 
         timer = new Timer(16, this);
         timer.start();
         lastSurvivalPointTime = System.currentTimeMillis();
+
+        try {
+            destructionImage = new ImageIcon(getClass().getClassLoader().getResource("Image/Destruction.png")).getImage();
+        } catch (Exception e) {
+            System.err.println("Destruction image not found.");
+        }
+
+        addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (gameOver.isVisible() && gameOver.isRestartClicked(e.getX(), e.getY())) {
+                    restartGame();
+                }
+            }
+        });
+
 
         addKeyListener(this);
         setFocusable(true);
@@ -62,7 +110,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // Draw background image if available
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
         } else {
@@ -70,41 +117,65 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g.fillRect(0, 0, getWidth(), getHeight());
         }
 
-        // Draw player
-        player.draw(g);
+        // Draw player only if game over screen is not visible
+        if (!gameOver.shouldHidePlayer()) {
+            player.draw(g);
+        }
 
-        // Draw bullets
+
         for (Bullet bullet : bullets) {
             bullet.draw(g);
         }
 
-        // Draw enemies
-        for (Enemy enemy : enemies) {
-            enemy.draw(g);
+        // Draw enemies only if destruction not showing
+        if (!showDestruction) {
+            for (Enemy enemy : enemies) {
+                enemy.draw(g);
+            }
+        } else if (destructionImage != null) {
+            g.drawImage(destructionImage, destructionX, destructionY, 200, 200, this);
         }
 
-        if(!GameOver.triggered) {
+        if (!gameOver.isTriggered()) {
             g.setColor(Color.WHITE);
             g.setFont(new Font("Arial", Font.BOLD, 18));
             g.drawString("Score: " + scoreManager.getScore(), 650, 30);
         }
-        gameOver.draw(g);
 
+        if (gameOver.isVisible()) {
+            gameOver.draw(g, getWidth());
+        }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (gameOver.isTriggered()) return;
+        if (gameOver.isTriggered()) {
+            // Handle destruction display timing
+            long now = System.currentTimeMillis();
+
+            if (destructionStartTime == 0) {
+                destructionStartTime = now;
+            }
+
+            if (now - destructionStartTime > DESTRUCTION_DISPLAY_MS) {
+                // After destruction time, show Game Over screen
+                showDestruction = false; // hide destruction animation
+                gameOver.visible = true;  // show Game Over screen
+            }
+
+            repaint();
+            return;  // Freeze game updates when Game Over triggered
+        }
 
         long currentTime = System.currentTimeMillis();
 
-        // Survival score update
+        // Survival score update every second
         if (currentTime - lastSurvivalPointTime >= 1000) {
             scoreManager.addSurvivalPoint();
             lastSurvivalPointTime = currentTime;
         }
 
-        // Spawn a new enemy every 2 seconds
+        // Spawn new enemy every ENEMY_SPAWN_DELAY ms
         if (currentTime - lastEnemySpawnTime >= ENEMY_SPAWN_DELAY) {
             spawnEnemy();
             lastEnemySpawnTime = currentTime;
@@ -115,25 +186,49 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             bullet.move();
         }
 
-        // Move enemies and check for collision with player
+        // Move enemies and check collision with player
         for (int i = enemies.size() - 1; i >= 0; i--) {
             Enemy enemy = enemies.get(i);
             enemy.moveToward(player);
 
-            // Check collision with player
-            if (checkCollision(enemy)) {
+            if (checkCollision(enemy) && !gameOver.isTriggered()) {
+                // Trigger game over sequence
+                showDestruction = true;
+                destructionX = player.x + player.width / 2 - 100; // assuming destruction image is 200px wide
+                destructionY = player.y + player.height / 2 - 100;
+
+
+                enemies.clear();
+                bullets.clear();
+
                 gameOver.trigger(scoreManager.getScore());
-                timer.stop();
+
+                destructionStartTime = 0;  // reset timer for destruction animation
+
+                // Play sound once
+                try {
+                    java.net.URL soundURL = getClass().getResource("/Sound/dragon_roar.wav");
+                    if (soundURL != null) {
+                        AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundURL);
+                        Clip clip = AudioSystem.getClip();
+                        clip.open(audioIn);
+                        clip.start();
+                    } else {
+                        System.err.println("Sound not found.");
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+
                 break;
             }
 
-            // Remove enemy if it goes below the screen
             if (enemy.y > getHeight()) {
                 enemies.remove(i);
             }
         }
 
-        // Bullet-enemy collision
+        // Bullet-enemy collision detection
         for (int i = bullets.size() - 1; i >= 0; i--) {
             Bullet bullet = bullets.get(i);
             for (int j = enemies.size() - 1; j >= 0; j--) {
@@ -150,24 +245,22 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         repaint();
     }
 
-
-    // Method to spawn enemies at random positions on the edges of the screen
     private void spawnEnemy() {
         int side = rand.nextInt(3); // 0 = top, 1 = left, 2 = right
         int ex = 0, ey = 0;
 
         switch (side) {
             case 0: // top edge
-                ex = rand.nextInt(800 - 40); // screen width - enemy width
-                ey = rand.nextInt(200); // upper 200 px of screen
+                ex = rand.nextInt(800 - 40);
+                ey = rand.nextInt(200);
                 break;
             case 1: // left edge
                 ex = 0;
-                ey = rand.nextInt(300); // Left side height
+                ey = rand.nextInt(300);
                 break;
             case 2: // right edge
-                ex = 800 - 40; // Right side width
-                ey = rand.nextInt(300); // Right side height
+                ex = 800 - 40;
+                ey = rand.nextInt(300);
                 break;
         }
 
@@ -175,11 +268,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private boolean checkCollision(Enemy enemy) {
-        // Define the bounding rectangles for player and enemy
         Rectangle enemyRect = new Rectangle(enemy.x, enemy.y, enemy.getWidth(), enemy.getHeight());
         Rectangle playerRect = new Rectangle(player.x, player.y, player.width, player.height);
-
-        return enemyRect.intersects(playerRect); // Check if they intersect (i.e., collide)
+        return enemyRect.intersects(playerRect);
     }
 
     @Override
@@ -197,24 +288,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         } else if (keyCode == KeyEvent.VK_SPACE) {
             long currentTime = System.currentTimeMillis();
 
-            // Left side bullet generation with a time gap
             if (currentTime - lastBulletLeftTime >= BULLET_FIRE_DELAY) {
-                int bulletXLeft = player.x + 10; // Slightly to the left of the player's center
-                int bulletYLeft = player.y - 10; // Just above the player's top
-                bullets.add(new Bullet(bulletXLeft, bulletYLeft));
+                int bulletX = player.x + player.width / 2 - 4; // 4 is half bullet width
+                int bulletY = player.y - 10;
+                bullets.add(new Bullet(bulletX, bulletY));
                 lastBulletLeftTime = currentTime;
-            }
-
-            // Right side bullet generation with a time gap
-            if (currentTime - lastBulletRightTime >= BULLET_FIRE_DELAY) {
-                int bulletXRight = player.x + player.width - 14; // Slightly to the right of the player's center
-                int bulletYRight = player.y - 10; // Just above the player's top
-                bullets.add(new Bullet(bulletXRight, bulletYRight));
-                lastBulletRightTime = currentTime;
             }
         }
     }
-
 
     @Override
     public void keyReleased(KeyEvent e) {}
