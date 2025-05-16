@@ -37,4 +37,9 @@ public class Bullet {
                 this.y < enemy.y + enemyHeight &&
                 this.y + this.height > enemy.y;
     }
+
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, width, height);
+    }
+
 }
