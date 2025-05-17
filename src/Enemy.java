@@ -3,21 +3,29 @@ import java.awt.*;
 
 public class Enemy {
     public int x, y;
-    private final int width = 40;
-    private final int height = 16;
+    private final int width = 80;
+    private final int height = 32;
     private Image enemyImage;
-    private final int speed = 2;
+    private final int speed;
     private boolean chasingPlayer = true;
 
     public Enemy(int x, int y) {
         this.x = x;
         this.y = y;
+        this.speed = 3 + (int)(Math.random() * 3);
+
+        String[] enemyImages = {
+                "/Image/Naruto.png",
+                "/Image/Goku.png",
+                "/Image/Gojo.png"
+        };
+        int index = (int)(Math.random() * enemyImages.length);
 
         try {
-            enemyImage = new ImageIcon(getClass().getResource("/Image/Enemy.png"))
+            enemyImage = new ImageIcon(getClass().getResource(enemyImages[index]))
                     .getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
         } catch (Exception e) {
-            System.out.println("Enemy image failed to load.");
+            System.out.println("Enemy image failed to load: " + enemyImages[index]);
         }
     }
 
@@ -32,37 +40,26 @@ public class Enemy {
 
     public void moveToward(Player player) {
         if (chasingPlayer) {
-            // Calculate target position (center of the player)
             int targetX = player.x + player.width / 2;
             int targetY = player.y + player.height / 2;
 
-            // Calculate the change in position (dx, dy)
             int dx = targetX - (x + width / 2);
             int dy = targetY - (y + height / 2);
-
-            // Calculate distance between enemy and player
             double distance = Math.sqrt(dx * dx + dy * dy);
 
-            // Move the enemy towards the player, adjusting for speed
             if (distance != 0) {
-                // Move horizontally towards the player
                 x += (int) (speed * dx / distance);
-
-                // Move vertically towards the player
                 y += (int) (speed * dy / distance);
             }
 
-            // If the enemy collides with the player, remove the enemy (this is handled in GamePanel later)
             if (y + height >= player.y && x + width >= player.x && x <= player.x + player.width) {
-                chasingPlayer = false; // Stop chasing if the enemy touches the player
+                chasingPlayer = false;
             }
         } else {
-            // Move the enemy down the screen after stopping the chase
             y += speed;
-
-            // Once the enemy moves off the screen, remove it
-            if (y > 600) {
-                // The enemy moves out of screen area
+            if(y > 600)
+            {
+                //disappear
             }
         }
     }

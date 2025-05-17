@@ -2,7 +2,7 @@ import javax.swing.JFrame;
 
 public class Main {
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Pixel Invaders");
+        JFrame frame = new JFrame("ANIMEvsDRAGON");
         GamePanel panel = new GamePanel();
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

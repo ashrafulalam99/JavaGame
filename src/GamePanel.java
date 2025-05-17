@@ -17,6 +17,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private ScoreManager scoreManager;
     private GameOver gameOver = new GameOver();
     private boolean gameOverStarted = false;
+    private GameRenderer renderer;
 
     private Image destructionImage;
     private boolean showDestruction = false;
@@ -40,7 +41,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private boolean powerUpActive = false;
     private long powerUpEndTime = 0;
     private long powerUpStartTime = 0;
-    private final long POWER_UP_DURATION = 30000;
+    private final long POWER_UP_DURATION = 15000;
     private Clip powerUpClip;
 
     private void loadPowerUpSound() {
@@ -138,6 +139,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         });
 
+        renderer = new GameRenderer(this);
+        addKeyListener(new KeyHandler(player, this));
         loadPowerUpSound();
         addKeyListener(this);
         setFocusable(true);
@@ -146,46 +149,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        if (backgroundImage != null) {
-            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-        } else {
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, getWidth(), getHeight());
-        }
-
-        // Draw player only if game over screen is not visible
-        if (!gameOver.shouldHidePlayer()) {
-            player.draw(g);
-        }
-
-
-        for (Bullet bullet : bullets) {
-            bullet.draw(g);
-        }
-
-        // Draw enemies only if destruction not showing
-        if (!showDestruction) {
-            for (Enemy enemy : enemies) {
-                enemy.draw(g);
-            }
-        } else if (destructionImage != null) {
-            g.drawImage(destructionImage, destructionX, destructionY, 200, 200, this);
-        }
-
-        if (!gameOver.isTriggered()) {
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 18));
-            g.drawString("Score: " + scoreManager.getScore(), 650, 30);
-        }
-
-        if (mystery != null && !gameOver.isTriggered()) {
-            mystery.draw(g);
-        }
-
-        if (gameOver.isVisible()) {
-            gameOver.draw(g, getWidth());
-        }
+        renderer.render(g);
     }
 
     @Override
@@ -219,7 +183,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             lastSurvivalPointTime = currentTime;
         }
 
-        // Spawn new enemy every ENEMY_SPAWN_DELAY ms
         if (currentTime - lastEnemySpawnTime >= ENEMY_SPAWN_DELAY) {
             spawnEnemy();
             lastEnemySpawnTime = currentTime;
@@ -322,7 +285,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         switch (side) {
             case 0: // top edge
-                ex = rand.nextInt(800 - 40);
+                ex = rand.nextInt(800 - 80);
                 ey = rand.nextInt(200);
                 break;
             case 1: // left edge
@@ -338,47 +301,60 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         enemies.add(new Enemy(ex, ey));
     }
 
+    public boolean isGameOver() {
+        return gameOver.isTriggered();
+    }
+
+
     private boolean checkCollision(Enemy enemy) {
         Rectangle enemyRect = new Rectangle(enemy.x, enemy.y, enemy.getWidth(), enemy.getHeight());
         Rectangle playerRect = new Rectangle(player.x, player.y, player.width, player.height);
         return enemyRect.intersects(playerRect);
     }
 
-    @Override
-    public void keyTyped(KeyEvent e) {}
+    public void handleBulletFire() {
+        long currentTime = System.currentTimeMillis();
 
-    @Override
-    public void keyPressed(KeyEvent e) {
-        if (gameOver.isTriggered()) return;
-        int keyCode = e.getKeyCode();
+        if (currentTime - lastBulletLeftTime >= BULLET_FIRE_DELAY) {
+            lastBulletLeftTime = currentTime;
 
-        if (keyCode == KeyEvent.VK_LEFT) {
-            player.moveLeft();
-        } else if (keyCode == KeyEvent.VK_RIGHT) {
-            player.moveRight();
-        } else if (keyCode == KeyEvent.VK_SPACE) {
-            long currentTime = System.currentTimeMillis();
-
-            if (currentTime - lastBulletLeftTime >= BULLET_FIRE_DELAY) {
-                lastBulletLeftTime = currentTime;
-
-                if (powerUpActive && currentTime <= powerUpEndTime) {
-                    // Double bullet: left and right from center
-                    int centerX = player.x + player.width / 2;
-                    int bulletY = player.y - 10;
-                    bullets.add(new Bullet(centerX - 20, bulletY)); // Left of center
-                    bullets.add(new Bullet(centerX + 20, bulletY)); // Right of center
-                } else {
-                    // Single bullet from center
-                    int bulletX = player.x + player.width / 2 - 4; // 4 is half bullet width
-                    int bulletY = player.y - 10;
-                    bullets.add(new Bullet(bulletX, bulletY));
-                }
+            if (powerUpActive && currentTime <= powerUpEndTime) {
+                int centerX = player.x + player.width / 2;
+                int bulletY = player.y - 10;
+                bullets.add(new Bullet(centerX - 20, bulletY));
+                bullets.add(new Bullet(centerX + 20, bulletY));
+            } else {
+                int bulletX = player.x + player.width / 2 - 4; // Assuming bullet is 8px wide
+                int bulletY = player.y - 10;
+                bullets.add(new Bullet(bulletX, bulletY));
             }
-
         }
     }
 
     @Override
-    public void keyReleased(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
+    }
+
+    public Player getPlayer() { return player; }
+    public ArrayList<Bullet> getBullets() { return bullets; }
+    public ArrayList<Enemy> getEnemies() { return enemies; }
+    public Image getBackgroundImage() { return backgroundImage; }
+    public GameOver getGameOver() { return gameOver; }
+    public boolean isShowDestruction() { return showDestruction; }
+    public Image getDestructionImage() { return destructionImage; }
+    public int getDestructionX() { return destructionX; }
+    public int getDestructionY() { return destructionY; }
+    public ScoreManager getScoreManager() { return scoreManager; }
+    public Mystery getMystery() { return mystery; }
 }

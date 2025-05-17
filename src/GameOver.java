@@ -24,7 +24,7 @@ public class GameOver {
         playSound("/Sound/dragon_roar.wav");
     }
 
-    public boolean isTriggered() {
+    public static boolean isTriggered() {
         return triggered;
     }
 
