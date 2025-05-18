@@ -9,18 +9,15 @@ public class Enemy {
     private final int speed;
     private boolean chasingPlayer = true;
 
+    //Image array for generating different enemy
     public Enemy(int x, int y) {
         this.x = x;
         this.y = y;
         this.speed = 3 + (int)(Math.random() * 3);
 
-        String[] enemyImages = {
-                "/Image/Naruto.png",
-                "/Image/Goku.png",
-                "/Image/Gojo.png"
-        };
-        int index = (int)(Math.random() * enemyImages.length);
+        String[] enemyImages = {"/Image/Naruto.png", "/Image/Goku.png", "/Image/Gojo.png"};
 
+        int index = (int)(Math.random() * enemyImages.length);
         try {
             enemyImage = new ImageIcon(getClass().getResource(enemyImages[index]))
                     .getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
@@ -32,7 +29,8 @@ public class Enemy {
     public void draw(Graphics g) {
         if (enemyImage != null) {
             g.drawImage(enemyImage, x, y, null);
-        } else {
+        }
+        else {
             g.setColor(Color.RED);
             g.fillRect(x, y, width, height);
         }
@@ -55,7 +53,8 @@ public class Enemy {
             if (y + height >= player.y && x + width >= player.x && x <= player.x + player.width) {
                 chasingPlayer = false;
             }
-        } else {
+        }
+        else {
             y += speed;
             if(y > 600)
             {
@@ -65,6 +64,5 @@ public class Enemy {
     }
 
     public int getWidth() { return width; }
-
     public int getHeight() { return height; }
 }

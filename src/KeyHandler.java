@@ -10,6 +10,7 @@ public class KeyHandler extends KeyAdapter {
         this.panel = panel;
     }
 
+    //Button for moving, firing
     @Override
     public void keyPressed(KeyEvent e) {
         if (panel.isGameOver()) return;
@@ -22,7 +23,7 @@ public class KeyHandler extends KeyAdapter {
                 player.moveRight();
                 break;
             case KeyEvent.VK_SPACE:
-                panel.handleBulletFire(); // ✅ Correct usage — called on GamePanel instance
+                panel.handleBulletFire();
                 break;
         }
     }

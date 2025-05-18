@@ -7,6 +7,7 @@ public class GameRenderer {
         this.panel = panel;
     }
 
+    //Drawing elements
     public void render(Graphics g) {
         Image backgroundImage = panel.getBackgroundImage();
         if (backgroundImage != null) {

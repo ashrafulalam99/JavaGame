@@ -1,5 +1,6 @@
 import java.awt.*;
 import java.awt.image.BufferedImage;
+
 public class Bullet {
     public int x, y;
     private final int width = 5;
@@ -16,14 +17,13 @@ public class Bullet {
     }
 
     public void draw(Graphics g) {
-        g.setColor(Color.YELLOW.brighter());
+        g.setColor(Color.BLUE.brighter());
         g.fillRect(x, y, width, height);
     }
 
     public int getWidth() {
         return width;
     }
-
     public int getHeight() {
         return height;
     }
@@ -41,5 +41,4 @@ public class Bullet {
     public Rectangle getBounds() {
         return new Rectangle(x, y, width, height);
     }
-
 }

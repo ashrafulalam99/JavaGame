@@ -11,7 +11,7 @@ public class GameOver {
 
     private static int highScore = 0;
 
-    // Restart button rectangle
+    // Restart button
     private Rectangle restartButton = new Rectangle(320, 350, 160, 50);
 
     public void trigger(int score) {
@@ -27,20 +27,17 @@ public class GameOver {
     public static boolean isTriggered() {
         return triggered;
     }
-
     public boolean isVisible() {
         return visible;
     }
-
     public boolean shouldHidePlayer() {
         return visible;
     }
 
     public void draw(Graphics g, int panelWidth) {
         if (!visible) return;
-
-        int y = 200; // Start Y a bit higher
-        int gap = 50; // Increased vertical gap
+        int y = 200;
+        int gap = 50; // Gap between each component
 
         g.setFont(new Font("Arial", Font.BOLD, 50));
         g.setColor(Color.RED);
@@ -49,7 +46,6 @@ public class GameOver {
         g.drawString(gameOverText, gameOverX, y);
 
         y += gap;
-
         g.setFont(new Font("Arial", Font.ITALIC, 30));
         g.setColor(Color.GREEN);
         String scoreText = "Your Score: " + finalScore;
@@ -57,22 +53,19 @@ public class GameOver {
         g.drawString(scoreText, scoreX, y);
 
         y += gap;
-
         g.setColor(Color.WHITE);
         String highScoreText = "High Score: " + highScore;
         int highScoreX = (panelWidth - g.getFontMetrics().stringWidth(highScoreText)) / 2;
         g.drawString(highScoreText, highScoreX, y);
 
+        // Draw Restart button
         y += gap;
-
-        // Draw Restart button centered
         int buttonWidth = 200;
         int buttonHeight = 60;
         int buttonX = (panelWidth - buttonWidth) / 2;
         int buttonY = y;
 
         restartButton.setBounds(buttonX, buttonY, buttonWidth, buttonHeight);
-
         g.setColor(Color.CYAN);
         g.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
 
@@ -100,10 +93,11 @@ public class GameOver {
             clip = AudioSystem.getClip();
             clip.open(audioInput);
 
+            //Sound with arrow function
             clip.addLineListener(event -> {
                 if (event.getType() == LineEvent.Type.STOP) {
                     clip.close();
-                    visible = true; // Show Game Over screen *after* sound ends
+                    visible = true;
                 }
             });
 
@@ -119,8 +113,7 @@ public class GameOver {
         return restartButton.contains(mouseX, mouseY);
     }
 
-    // Reset GameOver state for restarting game
     public static void reset() {
         triggered = false;
-    }
+    } // Reset GameOver state for restarting game
 }

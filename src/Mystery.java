@@ -6,6 +6,7 @@ public class Mystery {
     public int width = 40, height = 60;
     private Image image;
 
+    //Initialize with Image
     public Mystery(int x, int y) {
         this.x = x;
         this.y = y;
@@ -17,10 +18,11 @@ public class Mystery {
     }
 
     public void move() {
-        y += 4; // Slow downward movement
+        y += 8; //Downward movement
     }
 
-    public Rectangle getBounds() {
+    public Rectangle getBounds()
+    {
         return new Rectangle(x, y, width, height);
     }
 }
