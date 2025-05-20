@@ -5,7 +5,7 @@ import java.net.URL;
 
 public class GameOver {
     public static boolean triggered = false;
-    private int finalScore = 0;
+    private static int finalScore = 0;
     boolean visible = false;
     private Clip clip;
 
@@ -21,7 +21,7 @@ public class GameOver {
             highScore = score;
         }
         triggered = true; // Freeze game
-        playSound("/Sound/dragon_roar.wav");
+        playSound("resources/Sound/dragon_roar.wav");
     }
 
     public static boolean isTriggered() {

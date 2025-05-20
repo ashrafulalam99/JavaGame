@@ -1,24 +1,7 @@
-import javax.swing.*;
-import java.awt.*;
+public class Player extends GameObject implements Movable{
 
-public class Player {
-    public int x, y, width, height;
-    private Image playerImage;
-    private final int pixelSize = 5;
-
-    //Initialization with Image
     public Player(int x, int y, int width, int height) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
-
-        try {
-            playerImage = new ImageIcon(getClass().getResource("/Image/Player.png"))
-                    .getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-        } catch (Exception e) {
-            System.out.println("Player image failed to load.");
-        }
+        super(x, y, width, height, "/Image/Player.png");
     }
 
     public void moveLeft() {
@@ -29,7 +12,8 @@ public class Player {
         x = Math.min(700, x + 10);
     }
 
-    public void draw(Graphics g) {
-        g.drawImage(playerImage, x, y, null);
+    @Override
+    public void relocate() {
+        x = 350; 
     }
 }

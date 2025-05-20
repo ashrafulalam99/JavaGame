@@ -1,7 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class Enemy {
+public class Enemy{
     public int x, y;
     private final int width = 80;
     private final int height = 32;
